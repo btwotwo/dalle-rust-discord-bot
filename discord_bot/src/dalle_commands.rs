@@ -15,15 +15,15 @@ pub async fn dalle_generate(
 ) -> anyhow::Result<()> {
     info!("Got Dalle Generate command with prompt {}", prompt);
 
-    context
-        .say("Got your prompt, sending it to DALL-E...")
+    let msg = context
+        .say(format!("Sending \"{}\" to DALL-E...", prompt))
         .await?;
     context.defer().await?;
 
     let dalle = context.data().dalle.generate(&prompt).await?;
     info!("Got responses from DALL-E, downloading them.");
 
-    context.say("Got your generation, downloading...").await?;
+    msg.edit(context, |f| f.content("Got your generation, downloading...")).await?;
 
     let downloaded_images = download_images_to_fs(dalle, context).await?;
     let attachment_images: Vec<AttachmentType<'_>> = downloaded_images
@@ -33,9 +33,8 @@ pub async fn dalle_generate(
             filename: file.filename.clone(),
         })
         .collect();
-    context
-        .say("Images downloading, uploading them to Discord...")
-        .await?;
+    
+    msg.edit(context, |f| f.content("Images downloaded, uploading them to Discord...")).await?;
 
     context
         .send(|f| {
