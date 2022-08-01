@@ -1,14 +1,15 @@
 mod dalle_trait;
+pub mod fake_dalle;
 use anyhow::{anyhow, Context};
+use async_trait::async_trait;
 use const_format::concatcp;
+pub use dalle_trait::DalleGenerator;
 use log::{info, warn};
 use reqwest::{
     header::{AUTHORIZATION, CONTENT_TYPE},
     Client,
 };
 use serde_json::Value;
-pub use dalle_trait::DalleGenerator;
-use async_trait::async_trait;
 const BASE_URL: &str = "https://labs.openai.com/api/labs";
 const TASKS_URL: &str = concatcp!(BASE_URL, "/tasks");
 
@@ -85,7 +86,7 @@ impl Dalle {
     pub async fn get_task(&self, task_id: &str) -> anyhow::Result<Option<Vec<DalleResponse>>> {
         let task_url = format!("{}/{}", TASKS_URL, task_id);
         let res: Value = self.client.get(task_url).send().await?.json().await?;
-        
+
         info!("Got task info: {:?}", res);
 
         let task_status = res["status"]
@@ -98,7 +99,10 @@ impl Dalle {
                 let generations = Dalle::collect_generations(res)?;
                 Ok(Some(generations))
             }
-            "rejected" => {warn!("Task rejected, full response: {}", res); return Err(anyhow!("Generation is rejected. Full response: {}", res))},
+            "rejected" => {
+                warn!("Task rejected, full response: {}", res);
+                return Err(anyhow!("Generation is rejected. Full response: {}", res));
+            }
             "pending" => return Ok(None),
             _ => return Err(anyhow!("Invalid task status: {}", task_status)),
         }
@@ -138,7 +142,7 @@ impl Dalle {
                 Ok(None) => {
                     sleep(Duration::from_secs(2)).await;
                     continue;
-                },
+                }
                 Err(e) => {
                     warn!("Got error while downloading image, retrying: {}", e);
                     continue;
