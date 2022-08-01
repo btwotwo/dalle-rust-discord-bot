@@ -33,6 +33,8 @@ async fn main() {
     let config = load_config().await;
     SimpleLogger::new()
         .with_level(LevelFilter::Info)
+        .with_module_level("serenity", LevelFilter::Warn)
+        .with_module_level("tracing::span", LevelFilter::Warn)
         .init()
         .unwrap();
 
