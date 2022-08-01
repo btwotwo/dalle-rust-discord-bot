@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use crate::DiscordContext;
 use anyhow::Context;
 use bytes::Bytes;
-use dalle::DalleResponse;
+use dalle::{DalleResponse, DalleClient};
 use log::info;
 use poise::serenity_prelude::AttachmentType;
 use uuid::Uuid;
@@ -42,6 +42,18 @@ pub async fn dalle_generate(
             f.content(format!("Got your results for \"{}\"", prompt))
         })
         .await?;
+
+    Ok(())
+}
+
+#[poise::command(slash_command, guild_only)]
+pub async fn get_credits(context: DiscordContext<'_>) -> anyhow::Result<()> {
+    info!("Got Dalle credits command");
+    let msg = context.say("Got your request for credits, please wait...").await?;
+
+    let credits = context.data().dalle.get_remaining_credits().await?;
+
+    msg.edit(context, |f| f.content(format!("You have **{}** credits left.", credits))).await?;
 
     Ok(())
 }

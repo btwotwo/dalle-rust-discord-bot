@@ -15,7 +15,7 @@ struct Config {
     discord_token: String,
     dalle_token: String,
 }
-pub struct Data<TDalle: dalle::DalleGenerator> {
+pub struct Data<TDalle: dalle::DalleClient> {
     dalle: TDalle,
 }
 
@@ -40,7 +40,7 @@ async fn main() {
 
     poise::Framework::builder()
         .options(FrameworkOptions {
-            commands: vec![register(), dalle_commands::dalle_generate()],
+            commands: vec![register(), dalle_commands::dalle_generate(), dalle_commands::get_credits()],
             ..Default::default()
         })
         .token(config.discord_token)

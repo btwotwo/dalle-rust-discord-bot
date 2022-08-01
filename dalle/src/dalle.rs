@@ -1,9 +1,10 @@
 mod dalle_trait;
 pub mod fake_dalle;
+
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use const_format::concatcp;
-pub use dalle_trait::DalleGenerator;
+pub use dalle_trait::DalleClient;
 use log::{info, warn};
 use reqwest::{
     header::{AUTHORIZATION, CONTENT_TYPE},
@@ -12,6 +13,7 @@ use reqwest::{
 use serde_json::Value;
 const BASE_URL: &str = "https://labs.openai.com/api/labs";
 const TASKS_URL: &str = concatcp!(BASE_URL, "/tasks");
+const CREDITS_URL: &str = concatcp!(BASE_URL, "/billing/credit_summary");
 
 pub struct Dalle {
     client: Client,
@@ -22,13 +24,34 @@ pub struct DalleResponse {
 }
 
 #[async_trait]
-impl DalleGenerator for Dalle {
+impl DalleClient for Dalle {
     async fn generate(&self, prompt: &str) -> anyhow::Result<Vec<DalleResponse>> {
         self.generate(prompt).await
     }
 
     async fn get_task(&self, task_id: &str) -> anyhow::Result<Option<Vec<DalleResponse>>> {
         self.get_task(task_id).await
+    }
+
+    async fn get_remaining_credits(&self) -> anyhow::Result<i64> {
+/*
+ {
+                      "aggregate_credits": 64,
+                      "next_grant_ts": 1661153444,
+                      "breakdown": {
+                        "free": 0,
+                        "paid_dalle_15_115": 64
+                      },
+                      "object": "credit_summary"
+                    }
+ */
+        let res = self.client.get(CREDITS_URL).send().await?;
+        info!("Got response for credits {:?}", res);
+
+        let credits_json: Value = res.json().await?;
+        let credits_amount = credits_json["breakdown"]["paid_dalle_15_115"].as_i64().with_context(|| format!("Expected to have 'breakdown->paid_dalle_15_115' but got {}", credits_json))?;
+
+        Ok(credits_amount)
     }
 }
 
