@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context};
 use const_format::concatcp;
+use log::{info, warn};
 use reqwest::{
     header::{AUTHORIZATION, CONTENT_TYPE},
     Client,
@@ -49,9 +50,11 @@ impl Dalle {
             prompt
         );
 
+        info!("Sending following request to dalle: {}", body);
+
         let request = self.client.post(TASKS_URL).body(body);
         let res = request.send().await?;
-        println!("Got task: {:?}", res);
+        info!("Got response from dalle: {:?}", res);
 
         let res_json: Value = res.json().await?;
 
@@ -68,17 +71,20 @@ impl Dalle {
     pub async fn get_task(&self, task_id: &str) -> anyhow::Result<Option<Vec<DalleResponse>>> {
         let task_url = format!("{}/{}", TASKS_URL, task_id);
         let res: Value = self.client.get(task_url).send().await?.json().await?;
-        println!("Got task info: {}", res);
+        
+        info!("Got task info: {:?}", res);
+
         let task_status = res["status"]
             .as_str()
             .with_context(|| format!("expected res to have task status, but got {}", res))?;
+
         match task_status {
             "succeeded" => {
+                info!("Task succeeded, collecting generations.");
                 let generations = Dalle::collect_generations(res)?;
-
                 Ok(Some(generations))
             }
-            "rejected" => return Err(anyhow!("Generation is rejected. Full response: {}", res)),
+            "rejected" => {warn!("Task rejected, full response: {}", res); return Err(anyhow!("Generation is rejected. Full response: {}", res))},
             "pending" => return Ok(None),
             _ => return Err(anyhow!("Invalid task status: {}", task_status)),
         }
@@ -120,7 +126,7 @@ impl Dalle {
                     continue;
                 },
                 Err(e) => {
-                    println!("Got err while downloading image, trying again. {}", e);
+                    warn!("Got error while downloading image, retrying: {}", e);
                     continue;
                 }
             }

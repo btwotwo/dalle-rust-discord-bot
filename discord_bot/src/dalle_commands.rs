@@ -4,6 +4,7 @@ use crate::DiscordContext;
 use anyhow::Context;
 use bytes::Bytes;
 use dalle::DalleResponse;
+use log::info;
 use poise::serenity_prelude::AttachmentType;
 use uuid::Uuid;
 
@@ -12,12 +13,16 @@ pub async fn dalle_generate(
     context: DiscordContext<'_>,
     #[description = "A prompt for DALL-E 2"] prompt: String,
 ) -> anyhow::Result<()> {
+    info!("Got Dalle Generate command with prompt {}", prompt);
+
     context
         .say("Got your prompt, sending it to DALL-E...")
         .await?;
     context.defer().await?;
 
     let dalle = context.data().dalle.generate(&prompt).await?;
+    info!("Got responses from DALL-E, downloading them.");
+
     context.say("Got your generation, downloading...").await?;
 
     let downloaded_images = download_images_to_fs(dalle, context).await?;
@@ -28,7 +33,6 @@ pub async fn dalle_generate(
             filename: file.filename.clone(),
         })
         .collect();
-
     context
         .say("Images downloading, uploading them to Discord...")
         .await?;
@@ -71,6 +75,8 @@ async fn download_images_to_fs(
 }
 
 async fn download_image(img: DalleResponse) -> anyhow::Result<DalleImageFile> {
+    info!("Downloading image from {}", img.image_url);
+
     let filename = format!("{}.webp", Uuid::new_v4());
     let download_url = img.image_url;
 

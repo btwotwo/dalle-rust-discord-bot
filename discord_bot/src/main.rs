@@ -3,9 +3,11 @@ use std::{any, env, fs};
 
 use anyhow::anyhow;
 use dalle::Dalle;
+use log::{info, LevelFilter};
 use poise::serenity_prelude as serenity;
 use poise::{Framework, FrameworkOptions};
 use serde::{Deserialize, Serialize};
+use simple_logger::SimpleLogger;
 
 pub type DiscordContext<'a> = poise::Context<'a, Data, anyhow::Error>;
 pub const IMAGE_DIR: &str = "images";
@@ -19,24 +21,9 @@ pub struct Data {
     dalle: Dalle,
 }
 
-#[poise::command(slash_command)]
-async fn test_command(
-    ctx: DiscordContext<'_>,
-    #[description = "Testing this cool command!"] text: String,
-) -> anyhow::Result<()> {
-    let response = format!("Hello, {}!", text);
-    ctx.say(response).await?;
-    match text.as_str() {
-        "give me an error!" => Err(anyhow!(":)")),
-        _ => {
-            ctx.say(format!("MR POGGERS: '{}'", text)).await?;
-            Ok(())
-        }
-    }
-}
 #[poise::command(prefix_command)]
 async fn register(ctx: DiscordContext<'_>) -> anyhow::Result<()> {
-    println!("got register command");
+    info!("Got register command");
     poise::builtins::register_application_commands_buttons(ctx).await?;
     Ok(())
 }
@@ -44,10 +31,13 @@ async fn register(ctx: DiscordContext<'_>) -> anyhow::Result<()> {
 #[tokio::main]
 async fn main() {
     let config = load_config().await;
-    tokio::fs::create_dir_all(IMAGE_DIR).await.unwrap();
+    SimpleLogger::new().with_level(LevelFilter::Info).init().unwrap();
+
+    info!("Tokens retrieved, starting bot.");
+
     poise::Framework::builder()
         .options(FrameworkOptions {
-            commands: vec![test_command(), register(), dalle_commands::dalle_generate()],
+            commands: vec![register(), dalle_commands::dalle_generate()],
             ..Default::default()
         })
         .token(config.discord_token)
