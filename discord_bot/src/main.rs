@@ -1,15 +1,13 @@
 mod dalle_commands;
-use std::{any, env, fs};
 
-use anyhow::anyhow;
 use dalle::Dalle;
 use log::{info, LevelFilter};
 use poise::serenity_prelude as serenity;
-use poise::{Framework, FrameworkOptions};
+use poise::FrameworkOptions;
 use serde::{Deserialize, Serialize};
 use simple_logger::SimpleLogger;
 
-pub type DiscordContext<'a> = poise::Context<'a, Data, anyhow::Error>;
+pub type DiscordContext<'a> = poise::Context<'a, Data<Dalle>, anyhow::Error>;
 pub const IMAGE_DIR: &str = "images";
 
 #[derive(Deserialize, Serialize)]
@@ -17,8 +15,8 @@ struct Config {
     discord_token: String,
     dalle_token: String,
 }
-pub struct Data {
-    dalle: Dalle,
+pub struct Data<TDalle: dalle::DalleGenerator> {
+    dalle: TDalle,
 }
 
 #[poise::command(prefix_command)]

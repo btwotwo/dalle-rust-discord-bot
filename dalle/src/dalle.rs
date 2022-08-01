@@ -1,3 +1,4 @@
+mod dalle_trait;
 use anyhow::{anyhow, Context};
 use const_format::concatcp;
 use log::{info, warn};
@@ -6,6 +7,8 @@ use reqwest::{
     Client,
 };
 use serde_json::Value;
+pub use dalle_trait::DalleGenerator;
+use async_trait::async_trait;
 const BASE_URL: &str = "https://labs.openai.com/api/labs";
 const TASKS_URL: &str = concatcp!(BASE_URL, "/tasks");
 
@@ -15,6 +18,17 @@ pub struct Dalle {
 
 pub struct DalleResponse {
     pub image_url: String,
+}
+
+#[async_trait]
+impl DalleGenerator for Dalle {
+    async fn generate(&self, prompt: &str) -> anyhow::Result<Vec<DalleResponse>> {
+        self.generate(prompt).await
+    }
+
+    async fn get_task(&self, task_id: &str) -> anyhow::Result<Option<Vec<DalleResponse>>> {
+        self.get_task(task_id).await
+    }
 }
 
 impl Dalle {
