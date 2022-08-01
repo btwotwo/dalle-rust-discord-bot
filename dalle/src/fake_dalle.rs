@@ -1,8 +1,8 @@
 
 #[cfg(feature = "fake_dalle")]
 pub mod fake_dalle {
-    use crate::DalleGenerator;
-    use crate::{DalleGenerator, DalleResponse};
+    use crate::DalleClient;
+    use crate::{DalleClient, DalleResponse};
 
     pub struct FakeDalle;
 
