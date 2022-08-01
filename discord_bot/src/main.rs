@@ -31,7 +31,10 @@ async fn register(ctx: DiscordContext<'_>) -> anyhow::Result<()> {
 #[tokio::main]
 async fn main() {
     let config = load_config().await;
-    SimpleLogger::new().with_level(LevelFilter::Info).init().unwrap();
+    SimpleLogger::new()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
 
     info!("Tokens retrieved, starting bot.");
 
