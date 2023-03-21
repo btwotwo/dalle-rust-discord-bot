@@ -9,7 +9,7 @@ use text_io::{read, scan};
 #[tokio::main]
 async fn main() {
     let token = ger_token_from_config().unwrap();
-    let dalle = Dalle::new(&token).unwrap();
+    let dalle = Dalle::new(&token, 10).unwrap();
     println!("Enter prompt: ");
     let prompt: String = read!();
 

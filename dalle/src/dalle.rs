@@ -17,6 +17,7 @@ const CREDITS_URL: &str = concatcp!(BASE_URL, "/billing/credit_summary");
 
 pub struct Dalle {
     client: Client,
+    number_of_polls: usize
 }
 
 pub struct DalleResponse {
@@ -56,7 +57,7 @@ impl DalleClient for Dalle {
 }
 
 impl Dalle {
-    pub fn new(token: &str) -> anyhow::Result<Self> {
+    pub fn new(token: &str, number_of_polls: usize) -> anyhow::Result<Self> {
         use reqwest::header::{HeaderMap, HeaderValue};
         use reqwest::ClientBuilder;
         let formatted_token = format!("Bearer {}", token);
@@ -71,7 +72,7 @@ impl Dalle {
         let client = ClientBuilder::new()
             .default_headers(default_headers)
             .build()?;
-        Ok(Self { client })
+        Ok(Self { client, number_of_polls })
     }
 
     pub async fn generate(&self, prompt: &str) -> anyhow::Result<Vec<DalleResponse>> {
@@ -153,10 +154,9 @@ impl Dalle {
         use tokio::time::sleep;
         use tokio::time::Duration;
 
-        const MAX_ATTEMPTS: u8 = 10;
         let mut attempts = 0;
 
-        while attempts <= MAX_ATTEMPTS {
+        while attempts <= self.number_of_polls {
             attempts += 1;
             let task = self.get_task(task_id).await;
 
@@ -173,6 +173,6 @@ impl Dalle {
             }
         }
 
-        Err(anyhow!("Didn't get result after {} attempts", MAX_ATTEMPTS))
+        Err(anyhow!("Didn't get result after {} attempts", self.number_of_polls))
     }
 }

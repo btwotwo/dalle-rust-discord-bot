@@ -39,7 +39,7 @@ pub async fn dalle_generate(
     context
         .send(|f| {
             f.attachments = attachment_images;
-            f.content(format!("Got your results for \"{}\"", prompt))
+            f.content(prompt)
         })
         .await?;
 

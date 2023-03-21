@@ -1,4 +1,5 @@
 {
     "discord_token": "your discord token",
-    "dalle_token": "your dalle token"
+    "dalle_token": "your dalle token",
+    "number_of_polls": "how many times to poll dall-e for updates"
 }

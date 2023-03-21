@@ -14,6 +14,7 @@ pub const IMAGE_DIR: &str = "images";
 struct Config {
     discord_token: String,
     dalle_token: String,
+    number_of_polls: usize
 }
 pub struct Data<TDalle: dalle::DalleClient> {
     dalle: TDalle,
@@ -48,7 +49,7 @@ async fn main() {
         .user_data_setup(move |_ctx, _ready, _framework| {
             Box::pin(async move {
                 Ok(Data {
-                    dalle: Dalle::new(&config.dalle_token).expect("Expect Dalle to be created"),
+                    dalle: Dalle::new(&config.dalle_token, config.number_of_polls).expect("Expect Dalle to be created"),
                 })
             })
         })
